@@ -1,18 +1,18 @@
 package org.korren.jlox;
 
-public class AstPrinter implements Expr.Visitor<String> {
+public class RPNPrinter implements Expr.Visitor<String> {
     String print(Expr expr) {
         return expr.accept(this);
     }
 
     @Override
     public String visitBinaryExpr(Expr.Binary expr) {
-        return parenthesize(expr.operator.lexeme, expr.left, expr.right);
+        return push(expr.operator.lexeme, expr.left, expr.right);
     }
 
     @Override
     public String visitGroupingExpr(Expr.Grouping expr) {
-        return parenthesize("group", expr.expression);
+        return expr.expression.accept(this);
     }
 
     @Override
@@ -23,18 +23,17 @@ public class AstPrinter implements Expr.Visitor<String> {
 
     @Override
     public String visitUnaryExpr(Expr.Unary expr) {
-        return parenthesize(expr.operator.lexeme, expr.right);
+        return push(expr.operator.lexeme, expr.right);
     }
 
-    private String parenthesize(String name, Expr... exprs) {
+    private String push(String name, Expr... exprs) {
         StringBuilder builder = new StringBuilder();
 
-        builder.append("(").append(name);
         for (Expr expr : exprs) {
-            builder.append(" ");
             builder.append(expr.accept(this));
+            builder.append(" ");
         }
-        builder.append(")");
+        builder.append(name);
 
         return builder.toString();
     }
@@ -53,22 +52,22 @@ public class AstPrinter implements Expr.Visitor<String> {
         Expr expression2 = new Expr.Binary(
                 new Expr.Grouping(
                         new Expr.Binary(
-                            new Expr.Literal(1),
-                            new Token(TokenType.PLUS, "+", null, 1),
-                            new Expr.Literal(2)
+                                new Expr.Literal(1),
+                                new Token(TokenType.PLUS, "+", null, 1),
+                                new Expr.Literal(2)
                         )
                 ),
                 new Token(TokenType.STAR, "*", null, 1),
                 new Expr.Grouping(
                         new Expr.Binary(
-                            new Expr.Literal(4),
-                            new Token(TokenType.MINUS, "-", null, 1),
-                            new Expr.Literal(3)
+                                new Expr.Literal(4),
+                                new Token(TokenType.MINUS, "-", null, 1),
+                                new Expr.Literal(3)
                         )
                 )
         );
 
-        System.out.println(new AstPrinter().print(expression1));
-        System.out.println(new AstPrinter().print(expression2));
+        System.out.println(new RPNPrinter().print(expression1));
+        System.out.println(new RPNPrinter().print(expression2));
     }
 }
