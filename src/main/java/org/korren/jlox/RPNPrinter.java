@@ -6,6 +6,11 @@ public class RPNPrinter implements Expr.Visitor<String> {
     }
 
     @Override
+    public String visitTernaryExpr(Expr.Ternary expr) {
+        return push("?:", expr.condition, expr.trueBranch, expr.falseBranch);
+    }
+
+    @Override
     public String visitBinaryExpr(Expr.Binary expr) {
         return push(expr.operator.lexeme, expr.left, expr.right);
     }
