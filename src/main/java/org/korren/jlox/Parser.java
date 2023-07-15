@@ -26,10 +26,14 @@ public class Parser {
         }
     }
 
+    // expression -> continuation
     private Expr expression() {
         return continuation();
     }
 
+    // Production template:
+    //
+    // binaryProduction -> next ( "<one of: operators>" next )*
     private Expr binaryProduction(Production next, TokenType... operators) {
         Expr expr = next.production();
 
@@ -42,10 +46,12 @@ public class Parser {
         return expr;
     }
 
+    // continuation -> ternary ( "," ternary )*
     private Expr continuation() {
         return binaryProduction(this::ternary, COMMA);
     }
 
+    // ternary -> equality ( "?" ( expression ) ":" ternary )?
     private Expr ternary() {
         Expr expr = equality();
 
@@ -59,22 +65,27 @@ public class Parser {
         return expr;
     }
 
+    // equality -> comparison ( ( "!=" | "==" ) comparison )*
     private Expr equality() {
         return binaryProduction(this::comparison, BANG_EQUAL, EQUAL_EQUAL);
     }
 
+    // comparison -> term ( ( ">" | ">=" | "<" | "<=" ) term )+
     private Expr comparison() {
         return binaryProduction(this::term, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL);
     }
 
+    // term -> factor ( ( "-" | "+" ) factor )*
     private Expr term() {
         return binaryProduction(this::factor, MINUS, PLUS);
     }
 
+    // factor -> unary ( "/" | "*" ) factor )*
     private Expr factor() {
         return binaryProduction(this::unary, SLASH, STAR);
     }
 
+    // unary -> ( ( "!" | "-" ) unary | primary )
     private Expr unary() {
         if (match(BANG, MINUS)) {
             Token operator = previous();
@@ -85,6 +96,7 @@ public class Parser {
         return primary();
     }
 
+    // primary -> ( "false" | "true" | "nil" | number | string | "(" expression ")" )
     private Expr primary() {
         if (match(FALSE)) return new Expr.Literal(false);
         if (match(TRUE)) return new Expr.Literal(true);
