@@ -10,6 +10,10 @@ public class Parser {
     private final List<Token> tokens;
     private int current = 0;
 
+    private interface Production {
+        Expr production();
+    }
+
     Parser(List<Token> tokens) {
         this.tokens= tokens;
     }
@@ -26,16 +30,20 @@ public class Parser {
         return continuation();
     }
 
-    private Expr continuation() {
-        Expr expr = ternary();
+    private Expr binaryProduction(Production next, TokenType... operators) {
+        Expr expr = next.production();
 
-        while (match(COMMA)) {
+        while (match(operators)) {
             Token operator = previous();
-            Expr right = ternary();
+            Expr right = next.production();
             expr = new Expr.Binary(expr, operator, right);
         }
 
         return expr;
+    }
+
+    private Expr continuation() {
+        return binaryProduction(this::ternary, COMMA);
     }
 
     private Expr ternary() {
@@ -52,51 +60,19 @@ public class Parser {
     }
 
     private Expr equality() {
-        Expr expr = comparison();
-
-        while (match(BANG_EQUAL, EQUAL_EQUAL)) {
-            Token operator = previous();
-            Expr right = comparison();
-            expr = new Expr.Binary(expr, operator, right);
-        }
-
-        return expr;
+        return binaryProduction(this::comparison, BANG_EQUAL, EQUAL_EQUAL);
     }
 
     private Expr comparison() {
-        Expr expr = term();
-
-        while (match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
-            Token operator = previous();
-            Expr right = term();
-            expr = new Expr.Binary(expr, operator, right);
-        }
-
-        return expr;
+        return binaryProduction(this::term, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL);
     }
 
     private Expr term() {
-        Expr expr = factor();
-
-        while (match(MINUS, PLUS)) {
-            Token operator = previous();
-            Expr right = factor();
-            expr = new Expr.Binary(expr, operator, right);
-        }
-
-        return expr;
+        return binaryProduction(this::factor, MINUS, PLUS);
     }
 
     private Expr factor() {
-        Expr expr = unary();
-
-        while (match(SLASH, STAR)) {
-            Token operator = previous();
-            Expr right = unary();
-            expr = new Expr.Binary(expr, operator, right);
-        }
-
-        return expr;
+        return binaryProduction(this::unary, SLASH, STAR);
     }
 
     private Expr unary() {
