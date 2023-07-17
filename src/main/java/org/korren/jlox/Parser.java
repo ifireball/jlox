@@ -33,7 +33,7 @@ public class Parser {
 
     // Production template:
     //
-    // binaryProduction -> next ( "<one of: operators>" next )*
+    // binaryProduction -> missingLeft | next ( "<one of: operators>" next )*
     private Expr binaryProduction(Production next, TokenType... operators) {
         Expr expr = next.production();
 
@@ -46,9 +46,22 @@ public class Parser {
         return expr;
     }
 
+    // Production template:
+    //
+    // binaryProductionWithErrorDetection -> missingLeft | binaryProduction
+    // missingLeft                        -> "<one of: operators>" next -> error
+    private Expr binaryProductionWithErrorDetection(Production next, TokenType... operators) {
+        if (match(operators)) {
+            Token operator = previous();
+            next.production();
+            throw error(operator, "Missing left operand");
+        }
+        return binaryProduction(next, operators);
+    }
+
     // continuation -> ternary ( "," ternary )*
     private Expr continuation() {
-        return binaryProduction(this::ternary, COMMA);
+        return binaryProductionWithErrorDetection(this::ternary, COMMA);
     }
 
     // ternary -> equality ( "?" ( expression ) ":" ternary )?
@@ -67,12 +80,12 @@ public class Parser {
 
     // equality -> comparison ( ( "!=" | "==" ) comparison )*
     private Expr equality() {
-        return binaryProduction(this::comparison, BANG_EQUAL, EQUAL_EQUAL);
+        return binaryProductionWithErrorDetection(this::comparison, BANG_EQUAL, EQUAL_EQUAL);
     }
 
     // comparison -> term ( ( ">" | ">=" | "<" | "<=" ) term )+
     private Expr comparison() {
-        return binaryProduction(this::term, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL);
+        return binaryProductionWithErrorDetection(this::term, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL);
     }
 
     // term -> factor ( ( "-" | "+" ) factor )*
@@ -82,7 +95,7 @@ public class Parser {
 
     // factor -> unary ( "/" | "*" ) factor )*
     private Expr factor() {
-        return binaryProduction(this::unary, SLASH, STAR);
+        return binaryProductionWithErrorDetection(this::unary, SLASH, STAR);
     }
 
     // unary -> ( ( "!" | "-" ) unary | primary )
