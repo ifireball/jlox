@@ -5,10 +5,10 @@ import java.util.List;
 abstract class Expr {
   interface Visitor<R> {
     R visitTernaryExpr(Ternary expr);
-    R visitBinaryExpr(Binary expr) throws RuntimeError;
+    R visitBinaryExpr(Binary expr);
     R visitGroupingExpr(Grouping expr);
     R visitLiteralExpr(Literal expr);
-    R visitUnaryExpr(Unary expr) throws RuntimeError;
+    R visitUnaryExpr(Unary expr);
   }
   static class Ternary extends Expr {
     Ternary(Expr condition, Expr trueBranch, Expr falseBranch) {

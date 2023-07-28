@@ -1,16 +1,23 @@
 package org.korren.jlox;
 
-public class Interpreter implements Expr.Visitor<Object> {
-    void interpret(Expr expression) {
+import java.util.List;
+
+public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+    void interpret(List<Stmt> statements) {
         try {
-            Object value = evaluate(expression);
-            System.out.println(Stringify(value));
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
         } catch (RuntimeError error) {
             Lox.runtimeError(error);
         }
     }
 
-    private String Stringify(Object object) {
+    private void execute(Stmt statement) {
+        statement.accept(this);
+    }
+
+    private String stringify(Object object) {
         if (object == null) return "nil";
 
         if (object instanceof Double) {
@@ -57,7 +64,7 @@ public class Interpreter implements Expr.Visitor<Object> {
                 }
 
                 if (left instanceof String && (right instanceof String || right instanceof Double)) {
-                    return left + Stringify(right);
+                    return left + stringify(right);
                 }
 
                 throw new RuntimeError(expr.operator, "Operands must be two numbers or left operand must be a string");
@@ -131,5 +138,18 @@ public class Interpreter implements Expr.Visitor<Object> {
         if (left instanceof Double && right instanceof Double) return;
 
         throw new RuntimeError(operator, "Operands must be numbers.");
+    }
+
+    @Override
+    public Void visitExpressionStmt(Stmt.Expression stmt) {
+        evaluate(stmt.expression);
+        return null;
+    }
+
+    @Override
+    public Void visitPrintStmt(Stmt.Print stmt) {
+        Object value = evaluate(stmt.expression);
+        System.out.println(stringify(value));
+        return null;
     }
 }
