@@ -6,6 +6,11 @@ public class RPNPrinter implements Expr.Visitor<String> {
     }
 
     @Override
+    public String visitAssignExpr(Expr.Assign expr) {
+        return push("=", expr.value, expr.name);
+    }
+
+    @Override
     public String visitTernaryExpr(Expr.Ternary expr) {
         return push("?:", expr.condition, expr.trueBranch, expr.falseBranch);
     }
@@ -36,11 +41,17 @@ public class RPNPrinter implements Expr.Visitor<String> {
         return expr.name.lexeme;
     }
 
-    private String push(String name, Expr... exprs) {
+    private String push(String name, Object... exprs) {
         StringBuilder builder = new StringBuilder();
 
-        for (Expr expr : exprs) {
-            builder.append(expr.accept(this));
+        for (Object expr : exprs) {
+            if (expr instanceof Expr) {
+                builder.append(((Expr) expr).accept(this));
+            } else if (expr instanceof Token) {
+                builder.append(((Token) expr).lexeme);
+            } else {
+                builder.append(expr.toString());
+            }
             builder.append(" ");
         }
         builder.append(name);

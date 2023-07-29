@@ -132,9 +132,28 @@ public class Parser {
         return binaryProduction(next, operators);
     }
 
-    // continuation -> ternary ( "," ternary )*
+    // continuation -> assignment ( "," assignment )*
     private Expr continuation() {
-        return binaryProductionWithErrorDetection(this::ternary, COMMA);
+        return binaryProductionWithErrorDetection(this::assignment, COMMA);
+    }
+
+    // assignment -> identifier "=" assignment | ternary
+    private Expr assignment() {
+        Expr expr = ternary();
+
+        if (match(EQUAL)) {
+            Token equals = previous();
+            Expr value = assignment();
+
+            if (expr instanceof Expr.Variable) {
+                Token name = ((Expr.Variable)expr).name;
+                return new Expr.Assign(name, value);
+            }
+
+            error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
     }
 
     // ternary -> equality ( "?" ( expression ) ":" ternary )?
