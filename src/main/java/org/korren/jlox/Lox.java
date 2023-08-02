@@ -73,7 +73,7 @@ public class Lox {
         // auto add ";" at the end if its missing
         if (tokens.size() >= 2) {
             Token last = tokens.get(tokens.size() - 2);
-            if (last.type != TokenType.SEMICOLON) {
+            if (last.type != TokenType.SEMICOLON && last.type != TokenType.RIGHT_BRACE) {
                 Token semi = new Token(TokenType.SEMICOLON, ";", null, last.line);
                 tokens.add(tokens.size() - 1, semi);
             }
