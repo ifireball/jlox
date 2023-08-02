@@ -41,15 +41,23 @@ public class Lox {
             System.out.print("> ");
             String line = reader.readLine();
             if (line == null) break;
-            run(line);
+            replRun(line);
             hadError = false;
             hadRuntimeError = false;
         }
     }
 
-    private static void run(String source) {
+    private static void replRun(String source) {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
+        // auto add ";" at the end if its missing
+        if (tokens.size() >= 2) {
+            Token last = tokens.get(tokens.size() - 2);
+            if (last.type != TokenType.SEMICOLON) {
+                Token semi = new Token(TokenType.SEMICOLON, ";", null, last.line);
+                tokens.add(tokens.size() - 1, semi);
+            }
+        }
         Parser parser = new Parser(tokens);
         List<Stmt>statements = parser.parse();
 
@@ -59,6 +67,26 @@ public class Lox {
         // TODO: create special REPL mode that uses these:
         // System.out.println(new AstPrinter().print(expression));
         // System.out.println(new RPNPrinter().print(expression));
+
+        if (statements.size() >= 1) {
+            Stmt last = statements.get(statements.size() - 1);
+            // If the last statement is an expression, convert it into a print
+            if (last instanceof Stmt.Expression) {
+                statements.set(statements.size() - 1, new Stmt.Print(((Stmt.Expression) last).expression));
+            }
+        }
+        interpreter.interpret(statements);
+    }
+
+
+    private static void run(String source) {
+        Scanner scanner = new Scanner(source);
+        List<Token> tokens = scanner.scanTokens();
+        Parser parser = new Parser(tokens);
+        List<Stmt>statements = parser.parse();
+
+        // Stop is there was a syntax error
+        if (hadError) return;
 
         interpreter.interpret(statements);
     }
