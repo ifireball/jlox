@@ -6,6 +6,7 @@ import java.util.Map;
 public class Environment {
     final Environment enclosing;
     private final Map<String, Object> values = new HashMap<>();
+    private final Object UNASSIGNED = new Object();
 
     Environment(Environment enclosing) {
         this.enclosing = enclosing;
@@ -15,9 +16,15 @@ public class Environment {
         values.put(name, value);
     }
 
+    void defineUnassigned(String name) { values.put(name, UNASSIGNED); }
+
     Object get(Token name) {
         if (values.containsKey(name.lexeme)) {
-            return values.get(name.lexeme);
+            Object value =  values.get(name.lexeme);
+            if (value == UNASSIGNED) {
+                throw new RuntimeError(name, "Cannot read unassigned variable '" + name.lexeme + "'.");
+            }
+            return value;
         }
 
         if (enclosing != null) return enclosing.get(name);
