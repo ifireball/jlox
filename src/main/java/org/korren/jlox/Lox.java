@@ -48,6 +48,26 @@ public class Lox {
     }
 
     private static void replRun(String source) {
+        List<Stmt> statements = getReplStatements(source);
+
+        // Stop is there was a syntax error
+        if (hadError) return;
+
+        // TODO: create special REPL mode that uses these:
+        // System.out.println(new AstPrinter().print(expression));
+        // System.out.println(new RPNPrinter().print(expression));
+
+        if (!statements.isEmpty()) {
+            Stmt last = statements.get(statements.size() - 1);
+            // If the last statement is an expression, convert it into a print
+            if (last instanceof Stmt.Expression) {
+                statements.set(statements.size() - 1, new Stmt.Print(((Stmt.Expression) last).expression));
+            }
+        }
+        interpreter.interpret(statements);
+    }
+
+    private static List<Stmt> getReplStatements(String source) {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
         // auto add ";" at the end if its missing
@@ -59,23 +79,7 @@ public class Lox {
             }
         }
         Parser parser = new Parser(tokens);
-        List<Stmt>statements = parser.parse();
-
-        // Stop is there was a syntax error
-        if (hadError) return;
-
-        // TODO: create special REPL mode that uses these:
-        // System.out.println(new AstPrinter().print(expression));
-        // System.out.println(new RPNPrinter().print(expression));
-
-        if (statements.size() >= 1) {
-            Stmt last = statements.get(statements.size() - 1);
-            // If the last statement is an expression, convert it into a print
-            if (last instanceof Stmt.Expression) {
-                statements.set(statements.size() - 1, new Stmt.Print(((Stmt.Expression) last).expression));
-            }
-        }
-        interpreter.interpret(statements);
+        return parser.parse();
     }
 
 
