@@ -187,13 +187,37 @@ public class Parser {
 
     // ternary -> equality ( "?" ( expression ) ":" ternary )?
     private Expr ternary() {
-        Expr expr = equality();
+        Expr expr = or();
 
         if (match(QUESTION_MARK)) {
             Expr trueBranch = expression();
             consume(COLON, "Expect ':' in a ternary operator expression");
             Expr falseBranch = ternary();
             expr = new Expr.Ternary(expr, trueBranch, falseBranch);
+        }
+
+        return expr;
+    }
+
+    private Expr or() {
+        Expr expr = and();
+
+        while (match(OR)) {
+            Token operator = previous();
+            Expr right = and();
+            expr = new Expr.Logical(expr, operator, right);
+        }
+
+        return expr;
+    }
+
+    private Expr and() {
+        Expr expr = equality();
+
+        while (match(AND)) {
+            Token operator = previous();
+            Expr right = equality();
+            expr = new Expr.Logical(expr, operator, right);
         }
 
         return expr;

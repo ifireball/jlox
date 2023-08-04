@@ -1,6 +1,6 @@
 package org.korren.jlox;
 
-public class RPNPrinter implements Expr.Visitor<String> {
+class RPNPrinter implements Expr.Visitor<String> {
     String print(Expr expr) {
         return expr.accept(this);
     }
@@ -29,6 +29,11 @@ public class RPNPrinter implements Expr.Visitor<String> {
     public String visitLiteralExpr(Expr.Literal expr) {
         if (expr.value == null) return "nil";
         return expr.value.toString();
+    }
+
+    @Override
+    public String visitLogicalExpr(Expr.Logical expr) {
+        return push(expr.operator.lexeme, expr.left, expr.right);
     }
 
     @Override
