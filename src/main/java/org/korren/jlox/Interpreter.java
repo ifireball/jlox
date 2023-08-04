@@ -42,7 +42,11 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Object visitTernaryExpr(Expr.Ternary expr) {
-        return null;
+        if(isTruthy(evaluate(expr.condition))) {
+            return evaluate(expr.trueBranch);
+        } else {
+            return evaluate(expr.falseBranch);
+        }
     }
 
     @Override
