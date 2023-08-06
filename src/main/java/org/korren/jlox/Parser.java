@@ -338,7 +338,7 @@ public class Parser {
         return binaryProductionWithErrorDetection(this::unary, SLASH, STAR);
     }
 
-    // unary -> ( ( "!" | "-" ) unary | primary )
+    // unary -> ( ( "!" | "-" ) unary | call )
     private Expr unary() {
         if (match(BANG, MINUS)) {
             Token operator = previous();
@@ -346,7 +346,39 @@ public class Parser {
             return new Expr.Unary(operator, right);
         }
 
-        return primary();
+        return call();
+    }
+
+    // call -> primary ( "(" arguments? ")" )*
+    private Expr call() {
+        Expr expr = primary();
+
+        while (true) {
+            if (match(LEFT_PAREN)) {
+                expr = finishCall(expr);
+            } else {
+                break;
+            }
+        }
+
+        return expr;
+    }
+
+    // arguments -> expression ( "," expression )*
+    private Expr finishCall(Expr callee) {
+        List<Expr> arguments = new ArrayList<>();
+        if (!check(RIGHT_PAREN)) {
+            do {
+                if (arguments.size() > 255) {
+                    error(peek(), "Can't have more then 255 arguments.");
+                }
+                arguments.add(expression());
+            } while (match(COMMA));
+        }
+
+        Token paren = consume(RIGHT_PAREN, "Expect ')' after arguments.");
+
+        return new Expr.Call(callee, paren, arguments);
     }
 
     // primary -> ( "false" | "true" | "nil" | number | string | "(" expression ")" | identifier )

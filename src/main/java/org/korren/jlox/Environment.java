@@ -8,6 +8,9 @@ public class Environment {
     private final Map<String, Object> values = new HashMap<>();
     private final Object UNASSIGNED = new Object();
 
+    Environment() {
+        enclosing = null;
+    }
     Environment(Environment enclosing) {
         this.enclosing = enclosing;
     }
