@@ -1,0 +1,11 @@
+var n = 1;
+var i = 0;
+for(;;) {
+    n = n + n + n;
+    i = i + 1;
+    print n;
+    if (n > 1000) break;
+    if (i < 2) continue;
+    i = 0;
+    print n;
+}

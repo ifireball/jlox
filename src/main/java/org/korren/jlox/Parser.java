@@ -12,6 +12,8 @@ public class Parser {
     private final List<Token> tokens;
     private int current = 0;
 
+    private boolean inLoop = false;
+
     private interface Production {
         Expr production();
     }
@@ -64,6 +66,8 @@ public class Parser {
             if (previous().type == SEMICOLON) return;
 
             switch (peek().type) {
+                case BREAK:
+                case CONTINUE:
                 case CLASS:
                 case FUN:
                 case VAR:
@@ -79,8 +83,11 @@ public class Parser {
         }
     }
 
-    // statement -> expressionStatement | forStatement | ifStatement | printStatement | whileStatement | block
+    // statement -> expressionStatement | forStatement | ifStatement | printStatement | whileStatement |
+    //                breakStatement | continueStatement | block
     private Stmt statement() {
+        if (match(BREAK)) return breakStatement();
+        if (match(CONTINUE)) return continueStatement();
         if (match(FOR)) return forStatement();
         if (match(IF)) return ifStatement();
         if (match(PRINT)) return printStatement();
@@ -88,6 +95,26 @@ public class Parser {
         if (match(LEFT_BRACE)) return new Stmt.Block(block());
 
         return expressionStatement();
+    }
+
+    // breakStatement = "break" ";"
+    private Stmt breakStatement() {
+        Token keyword = previous();
+        consume(SEMICOLON, "Expect ';' after 'break'.");
+
+        if (!inLoop) error(keyword, "'break' cannot appear outside of a loop");
+
+        return new Stmt.Break(keyword);
+    }
+
+    // continueStatement = "continue" ";"
+    private Stmt continueStatement() {
+        Token keyword = previous();
+        consume(SEMICOLON, "Expect ';' after 'continue'.");
+
+        if (!inLoop) error(keyword, "'continue' cannot appear outside of a loop");
+
+        return new Stmt.Continue(keyword);
     }
 
     // forStatement -> "for" "(" (varDeclaration | expressionStatement | ";")
@@ -118,7 +145,7 @@ public class Parser {
         }
         consume(RIGHT_PAREN, "Expect ')' after for clauses.");
 
-        Stmt body = statement();
+        Stmt body = getLoopBody();
 
         if (increment != null) {
             body = new Stmt.Block(Arrays.asList(body, new Stmt.Expression(increment)));
@@ -137,9 +164,22 @@ public class Parser {
         consume(LEFT_PAREN, "Expect '(' after 'while'.");
         Expr condition = expression();
         consume(RIGHT_PAREN, "Expect ')' after condition.");
-        Stmt body = statement();
+
+        Stmt body = getLoopBody();
 
         return new Stmt.While(condition, body);
+    }
+
+    private Stmt getLoopBody() {
+        boolean currentInLoop = inLoop;
+        Stmt body;
+        try {
+            inLoop = true;
+            body = statement();
+        } finally {
+            inLoop = currentInLoop;
+        }
+        return body;
     }
 
     // ifStatement -> "if" "(" expression ")" statement ( "else" statement )?
