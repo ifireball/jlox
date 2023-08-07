@@ -32,9 +32,10 @@ public class Parser {
         return statements;
     }
 
-    // declaration -> varDeclaration | statement
+    // declaration -> function | varDeclaration | statement
     private Stmt declaration() {
         try {
+            if (match(FUN)) return function("function");
             if (match(VAR)) return varDeclaration();
 
             return statement();
@@ -43,6 +44,28 @@ public class Parser {
 
             return null;
         }
+    }
+
+    // function -> "fun" identifier "(" parameters? ")" block
+    // parameters -> identifier ( "," identifier )*
+    private Stmt.Function function(String kind) {
+        Token name = consume(IDENTIFIER, "Expect " + kind + " name");
+        consume(LEFT_PAREN, "Expect '(' after " + kind + " name");
+        List<Token> parameters = new ArrayList<>();
+        if (!check(RIGHT_PAREN)) {
+            do {
+                if (parameters.size() >= 255) {
+                    error(peek(), "Can't have more then 255 parameters");
+                }
+
+                parameters.add(consume(IDENTIFIER, "Expect parameter name."));
+            } while (match(COMMA));
+        }
+        consume(RIGHT_PAREN, "Expect ')' after parameters");
+
+        consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
+        List<Stmt> body = block();
+        return new Stmt.Function(name, parameters, body);
     }
 
     // varDeclaration -> "var" identifier ( "=" expression )? ";"
@@ -364,7 +387,8 @@ public class Parser {
         return expr;
     }
 
-    // arguments -> expression ( "," expression )*
+    // arguments -> assignment ( "," assignment )*
+    // Note: it needs to be assignment here and not expression because we have the comma operator.
     private Expr finishCall(Expr callee) {
         List<Expr> arguments = new ArrayList<>();
         if (!check(RIGHT_PAREN)) {
@@ -372,7 +396,7 @@ public class Parser {
                 if (arguments.size() > 255) {
                     error(peek(), "Can't have more then 255 arguments.");
                 }
-                arguments.add(expression());
+                arguments.add(assignment());
             } while (match(COMMA));
         }
 
