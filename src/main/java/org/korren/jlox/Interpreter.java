@@ -153,6 +153,11 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Object visitLambdaExpr(Expr.Lambda expr) {
+        return new LoxFunction(expr.params, expr.body, environment);
+    }
+
+    @Override
     public Object visitLiteralExpr(Expr.Literal expr) {
         return expr.value;
     }
@@ -239,7 +244,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitFunctionStmt(Stmt.Function stmt) {
-        LoxFunction function = new LoxFunction(stmt, environment);
+        LoxFunction function = new LoxFunction(stmt.name.lexeme, stmt.params, stmt.body, environment);
         environment.define(stmt.name.lexeme, function);
         return null;
     }

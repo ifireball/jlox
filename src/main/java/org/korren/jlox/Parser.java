@@ -36,7 +36,12 @@ public class Parser {
     // declaration -> function | varDeclaration | statement
     private Stmt declaration() {
         try {
-            if (match(FUN)) return function("function");
+            // To differentiate between a function definition statement and a lambda expression, we check if 'fun'
+            // is followed by a name
+            if (check(FUN) && checkNext(IDENTIFIER)) {
+                advance();
+                return function("function");
+            }
             if (match(VAR)) return varDeclaration();
 
             return statement();
@@ -48,10 +53,33 @@ public class Parser {
     }
 
     // function -> "fun" identifier "(" parameters? ")" block
-    // parameters -> identifier ( "," identifier )*
     private Stmt.Function function(String kind) {
         Token name = consume(IDENTIFIER, "Expect " + kind + " name");
         consume(LEFT_PAREN, "Expect '(' after " + kind + " name");
+        List<Token> parameters = parameters();
+        consume(RIGHT_PAREN, "Expect ')' after parameters");
+
+        consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
+
+        List<Stmt> body = getRoutineBody();
+
+        return new Stmt.Function(name, parameters, body);
+    }
+
+    private List<Stmt> getRoutineBody() {
+        List<Stmt> body;
+        boolean currentInFunction = inFunction;
+        try {
+            inFunction = true;
+            body = block();
+        } finally {
+            inFunction = currentInFunction;
+        }
+        return body;
+    }
+
+    // parameters -> identifier ( "," identifier )*
+    private List<Token> parameters() {
         List<Token> parameters = new ArrayList<>();
         if (!check(RIGHT_PAREN)) {
             do {
@@ -62,20 +90,7 @@ public class Parser {
                 parameters.add(consume(IDENTIFIER, "Expect parameter name."));
             } while (match(COMMA));
         }
-        consume(RIGHT_PAREN, "Expect ')' after parameters");
-
-        consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
-
-        List<Stmt> body;
-        boolean currentInFunction = inFunction;
-        try {
-            inFunction = true;
-            body = block();
-        } finally {
-            inFunction = currentInFunction;
-        }
-
-        return new Stmt.Function(name, parameters, body);
+        return parameters;
     }
 
     // varDeclaration -> "var" identifier ( "=" expression )? ";"
@@ -430,7 +445,7 @@ public class Parser {
         return new Expr.Call(callee, paren, arguments);
     }
 
-    // primary -> ( "false" | "true" | "nil" | number | string | "(" expression ")" | identifier )
+    // primary -> ( "false" | "true" | "nil" | number | string | "(" expression ")" | lambda | identifier )
     private Expr primary() {
         if (match(FALSE)) return new Expr.Literal(false);
         if (match(TRUE)) return new Expr.Literal(true);
@@ -446,11 +461,26 @@ public class Parser {
             return new Expr.Grouping(expr);
         }
 
+        if (match(FUN)) {
+            return lambda();
+        }
+
         if (match(IDENTIFIER)) {
             return new Expr.Variable(previous());
         }
 
         throw error(peek(), "Expect expression.");
+    }
+
+    private Expr.Lambda lambda() {
+        consume(LEFT_PAREN, "Expect '(' after 'fun'");
+        List<Token> parameters = parameters();
+        consume(RIGHT_PAREN, "Expect ')' after parameters");
+
+        consume(LEFT_BRACE, "Expect '{' before function body.");
+        List<Stmt> body = getRoutineBody();
+
+        return new Expr.Lambda(parameters, body);
     }
 
     private Token consume(TokenType type, String message) {
@@ -478,6 +508,11 @@ public class Parser {
     private boolean check(TokenType type) {
         if (isAtEnd()) return false;
         return peek().type == type;
+    }
+
+    private boolean checkNext(TokenType type) {
+        if (isAtEnd()) return false;
+        return tokens.get(current + 1).type == type;
     }
 
     private Token advance() {
