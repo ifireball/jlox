@@ -1,0 +1,18 @@
+// The following should print:
+// global
+// global
+//
+// But it may print the following if variable resolution is too dynamic:
+// global
+// block
+//
+var a = "global";
+{
+  fun showA() {
+    print a;
+  }
+
+  showA();
+  var a = "block";
+  showA();
+}
