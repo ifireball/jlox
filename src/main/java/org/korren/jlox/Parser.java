@@ -13,7 +13,6 @@ public class Parser {
     private int current = 0;
 
     private boolean inLoop = false;
-    private boolean inFunction = false;
 
     private interface Production {
         Expr production();
@@ -61,21 +60,9 @@ public class Parser {
 
         consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
 
-        List<Stmt> body = getRoutineBody();
+        List<Stmt> body = block();
 
         return new Stmt.Function(name, parameters, body);
-    }
-
-    private List<Stmt> getRoutineBody() {
-        List<Stmt> body;
-        boolean currentInFunction = inFunction;
-        try {
-            inFunction = true;
-            body = block();
-        } finally {
-            inFunction = currentInFunction;
-        }
-        return body;
     }
 
     // parameters -> identifier ( "," identifier )*
@@ -154,9 +141,6 @@ public class Parser {
         }
 
         consume(SEMICOLON, "Expect ';' after return value");
-
-        if (!inFunction) error(keyword, "Cannot have 'return' outside of a function or a method");
-
         return new Stmt.Return(keyword, value);
     }
 
@@ -478,7 +462,7 @@ public class Parser {
         consume(RIGHT_PAREN, "Expect ')' after parameters");
 
         consume(LEFT_BRACE, "Expect '{' before function body.");
-        List<Stmt> body = getRoutineBody();
+        List<Stmt> body = block();
 
         return new Expr.Lambda(parameters, body);
     }
