@@ -12,8 +12,6 @@ public class Parser {
     private final List<Token> tokens;
     private int current = 0;
 
-    private boolean inLoop = false;
-
     private interface Production {
         Expr production();
     }
@@ -148,9 +146,6 @@ public class Parser {
     private Stmt breakStatement() {
         Token keyword = previous();
         consume(SEMICOLON, "Expect ';' after 'break'.");
-
-        if (!inLoop) error(keyword, "'break' cannot appear outside of a loop");
-
         return new Stmt.Break(keyword);
     }
 
@@ -158,9 +153,6 @@ public class Parser {
     private Stmt continueStatement() {
         Token keyword = previous();
         consume(SEMICOLON, "Expect ';' after 'continue'.");
-
-        if (!inLoop) error(keyword, "'continue' cannot appear outside of a loop");
-
         return new Stmt.Continue(keyword);
     }
 
@@ -192,7 +184,7 @@ public class Parser {
         }
         consume(RIGHT_PAREN, "Expect ')' after for clauses.");
 
-        Stmt body = getLoopBody();
+        Stmt body = statement();
 
         if (increment != null) {
             body = new Stmt.Block(Arrays.asList(body, new Stmt.Expression(increment)));
@@ -212,21 +204,9 @@ public class Parser {
         Expr condition = expression();
         consume(RIGHT_PAREN, "Expect ')' after condition.");
 
-        Stmt body = getLoopBody();
+        Stmt body = statement();
 
         return new Stmt.While(condition, body);
-    }
-
-    private Stmt getLoopBody() {
-        boolean currentInLoop = inLoop;
-        Stmt body;
-        try {
-            inLoop = true;
-            body = statement();
-        } finally {
-            inLoop = currentInLoop;
-        }
-        return body;
     }
 
     // ifStatement -> "if" "(" expression ")" statement ( "else" statement )?

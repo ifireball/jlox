@@ -9,6 +9,7 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private final Interpreter interpreter;
     private final Stack<Map<String, Boolean>> scopes = new Stack<>();
     private FunctionType currentFunction = FunctionType.NONE;
+    private boolean inLoop = false;
 
     private enum FunctionType {
         NONE,
@@ -104,11 +105,15 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitBreakStmt(Stmt.Break stmt) {
+        if (!inLoop) Lox.error(stmt.keyword, "'break' cannot appear outside of a loop");
+
         return null;
     }
 
     @Override
     public Void visitContinueStmt(Stmt.Continue stmt) {
+        if (!inLoop) Lox.error(stmt.keyword, "'continue' cannot appear outside of a loop");
+
         return null;
     }
 
@@ -167,7 +172,13 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     @Override
     public Void visitWhileStmt(Stmt.While stmt) {
         resolve(stmt.condition);
-        resolve(stmt.body);
+        boolean enclosingBlockInLoop = inLoop;
+        try {
+            inLoop = true;
+            resolve(stmt.body);
+        } finally {
+            inLoop = enclosingBlockInLoop;
+        }
         return null;
     }
 
