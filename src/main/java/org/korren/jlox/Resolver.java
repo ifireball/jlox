@@ -7,7 +7,7 @@ import java.util.Stack;
 
 class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private final Interpreter interpreter;
-    private final Stack<Map<String, Boolean>> scopes = new Stack<>();
+    private final Stack<Map<String, VarInfo>> scopes = new Stack<>();
     private FunctionType currentFunction = FunctionType.NONE;
     private boolean inLoop = false;
 
@@ -15,6 +15,18 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         NONE,
         FUNCTION,
         LAMBDA
+    }
+
+    private static class VarInfo {
+        boolean defined = false;
+        Token nameTok;
+        String varType;
+        boolean wasUsed = false;
+
+        VarInfo(Token nameTok, String varType) {
+            this.nameTok = nameTok;
+            this.varType = varType;
+        }
     }
 
     Resolver(Interpreter interpreter) {
@@ -87,11 +99,15 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitVariableExpr(Expr.Variable expr) {
-        if (!scopes.isEmpty() && scopes.peek().get(expr.name.lexeme) == Boolean.FALSE) {
+        if (scopes.isEmpty()) return null;
+
+        VarInfo vi = resolveLocal(expr, expr.name);
+        if (vi == null) return null;
+
+        if (vi.defined == Boolean.FALSE) {
             Lox.error(expr.name, "Can't read local variable in its own initializer.");
         }
-
-        resolveLocal(expr, expr.name);
+        vi.wasUsed = true;
         return null;
     }
 
@@ -125,7 +141,7 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitFunctionStmt(Stmt.Function stmt) {
-        declare(stmt.name);
+        declare(stmt.name, "function");
         define(stmt.name);
 
         resolveFunction(stmt, FunctionType.FUNCTION);
@@ -161,7 +177,7 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitVarStmt(Stmt.Var stmt) {
-        declare(stmt.name);
+        declare(stmt.name, "variable");
         if (stmt.initializer != null) {
             resolve(stmt.initializer);
         }
@@ -182,13 +198,14 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         return null;
     }
 
-    private void resolveLocal(Expr expr, Token name) {
+    private VarInfo resolveLocal(Expr expr, Token name) {
         for (int i = scopes.size() - 1; i >= 0; i--) {
             if (scopes.get(i).containsKey(name.lexeme)) {
                 interpreter.resolve(expr, scopes.size() - 1 - i);
-                return;
+                return scopes.get(i).get(name.lexeme);
             }
         }
+        return null;
     }
 
     private void resolveFunction(Stmt.Function function, FunctionType type) {
@@ -205,7 +222,7 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
             currentFunction = type;
             beginScope();
             for (Token param : params) {
-                declare(param);
+                declare(param, "parameter");
                 define(param);
             }
             resolve(body);
@@ -229,23 +246,28 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         expr.accept(this);
     }
 
-    private void declare(Token name) {
+    private void declare(Token name, String varType) {
         if (scopes.isEmpty()) return;
 
-        Map<String, Boolean> scope = scopes.peek();
+        Map<String, VarInfo> scope = scopes.peek();
         if (scope.containsKey(name.lexeme)) {
-            Lox.error(name, "Already have a variable with this name in this scope.");
+            Lox.error(name, "Already have a " + scope.get(name.lexeme).varType + " with this name in this scope.");
         }
-        scope.put(name.lexeme, false);
+        scope.put(name.lexeme, new VarInfo(name, varType));
     }
 
     private void define(Token name) {
         if (scopes.isEmpty()) return;
-        scopes.peek().put(name.lexeme, true);
+        scopes.peek().get(name.lexeme).defined = true;
     }
 
     private void endScope() {
-        scopes.pop();
+        Map<String, VarInfo> scope = scopes.pop();
+        scope.forEach((n, vi) -> {
+            if(!vi.wasUsed) {
+                Lox.error(vi.nameTok, vi.varType + " was defined but never used.");
+            }
+        });
     }
 
     private void beginScope() {

@@ -1,9 +1,11 @@
 // The following should print:
 // global
 // global
+// block
 //
 // But it may print the following if variable resolution is too dynamic:
 // global
+// block
 // block
 //
 var a = "global";
@@ -15,4 +17,5 @@ var a = "global";
   showA();
   var a = "block";
   showA();
+  print a;
 }
