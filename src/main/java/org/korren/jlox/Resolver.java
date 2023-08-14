@@ -127,6 +127,13 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitClassStmt(Stmt.Class stmt) {
+        declare(stmt.name, "class");
+        define(stmt.name);
+        return null;
+    }
+
+    @Override
     public Void visitContinueStmt(Stmt.Continue stmt) {
         if (!inLoop) Lox.error(stmt.keyword, "'continue' cannot appear outside of a loop");
 

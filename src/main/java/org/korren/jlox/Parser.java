@@ -30,9 +30,10 @@ public class Parser {
         return statements;
     }
 
-    // declaration -> function | varDeclaration | statement
+    // declaration -> classDeclaration | function | varDeclaration | statement
     private Stmt declaration() {
         try {
+            if (match(CLASS)) return classDeclaration();
             // To differentiate between a function definition statement and a lambda expression, we check if 'fun'
             // is followed by a name
             if (check(FUN) && checkNext(IDENTIFIER)) {
@@ -47,6 +48,22 @@ public class Parser {
 
             return null;
         }
+    }
+
+    // classDeclaration -> "class" identifier "{" function* "}"
+    // function is without the "fun" keyword.
+    private Stmt classDeclaration() {
+        Token name = consume(IDENTIFIER, "Expect class name.");
+        consume(LEFT_BRACE, "Expect '{' before class body.");
+
+        List<Stmt.Function> methods = new ArrayList<>();
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            methods.add(function("method"));
+        }
+
+        consume(RIGHT_BRACE, "Expect '}' after class body");
+
+        return new Stmt.Class(name, methods);
     }
 
     // function -> "fun" identifier "(" parameters? ")" block
