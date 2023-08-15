@@ -18,7 +18,11 @@ class LoxFunction implements LoxCallable {
         this("lambda", params, body, closure);
     }
 
-        @Override
+    LoxFunction(Stmt.Function stmt, Environment environment) {
+        this(stmt.name.lexeme, stmt.params, stmt.body, environment);
+    }
+
+    @Override
     public Object call(Interpreter interpreter, List<Object> arguments) {
         Environment environment = new Environment(closure);
         for (int i = 0; i < params.size(); i++) {
