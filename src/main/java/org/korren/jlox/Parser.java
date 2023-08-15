@@ -305,7 +305,7 @@ public class Parser {
         return binaryProductionWithErrorDetection(this::assignment, COMMA);
     }
 
-    // assignment -> identifier "=" assignment | ternary
+    // assignment -> ( call "." )? identifier "=" assignment | ternary
     private Expr assignment() {
         Expr expr = ternary();
 
@@ -316,6 +316,9 @@ public class Parser {
             if (expr instanceof Expr.Variable) {
                 Token name = ((Expr.Variable)expr).name;
                 return new Expr.Assign(name, value);
+            } else if (expr instanceof Expr.Get) {
+                Expr.Get get = (Expr.Get)expr;
+                return new Expr.Set(get.object, get.name, value);
             }
 
             error(equals, "Invalid assignment target.");
@@ -324,7 +327,7 @@ public class Parser {
         return expr;
     }
 
-    // ternary -> equality ( "?" ( expression ) ":" ternary )?
+    // ternary -> or ( "?" ( expression ) ":" ternary )?
     private Expr ternary() {
         Expr expr = or();
 
@@ -338,6 +341,7 @@ public class Parser {
         return expr;
     }
 
+    // or -> and ("or" and)*
     private Expr or() {
         Expr expr = and();
 
@@ -350,6 +354,7 @@ public class Parser {
         return expr;
     }
 
+    // and -> equality ("and" equality)*
     private Expr and() {
         Expr expr = equality();
 
@@ -393,13 +398,16 @@ public class Parser {
         return call();
     }
 
-    // call -> primary ( "(" arguments? ")" )*
+    // call -> primary ( "(" arguments? ")" | "." identifier )*
     private Expr call() {
         Expr expr = primary();
 
         while (true) {
             if (match(LEFT_PAREN)) {
                 expr = finishCall(expr);
+            } else if (match(DOT)) {
+                Token name = consume(IDENTIFIER, "Expect property name after '.'.");
+                expr = new Expr.Get(expr, name);
             } else {
                 break;
             }
