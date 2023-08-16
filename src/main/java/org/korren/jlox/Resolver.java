@@ -10,12 +10,17 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private final Stack<Map<String, VarInfo>> scopes = new Stack<>();
     private FunctionType currentFunction = FunctionType.NONE;
     private boolean inLoop = false;
+    private ClassType currentClass = ClassType.NONE;
 
     private enum FunctionType {
         NONE,
         FUNCTION,
         METHOD,
         LAMBDA
+    }
+    private enum ClassType {
+        NONE,
+        CLASS
     }
 
     private static class VarInfo {
@@ -106,6 +111,16 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitThisExpr(Expr.This expr) {
+        if (currentClass == ClassType.NONE) {
+            Lox.error(expr.keyword, "Can't use 'this' outside of a class.");
+        }
+
+        resolveLocal(expr, expr.keyword);
+        return null;
+    }
+
+    @Override
     public Void visitUnaryExpr(Expr.Unary expr) {
         resolve(expr.right);
         return null;
@@ -142,12 +157,29 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
-        declare(stmt.name, "class");
-        for (Stmt.Function method : stmt.methods) {
-            FunctionType declaration = FunctionType.METHOD;
-            resolveFunction(method, declaration);
+        ClassType enclosingClass = currentClass;
+        try {
+            currentClass = ClassType.CLASS;
+
+            declare(stmt.name, "class");
+            define(stmt.name);
+
+            beginScope();
+            var vi = new VarInfo(stmt.name, "this");
+            vi.defined = true;
+            vi.wasUsed = true;
+            scopes.peek().put("this", vi);
+
+            for (Stmt.Function method : stmt.methods) {
+                FunctionType declaration = FunctionType.METHOD;
+                resolveFunction(method, declaration);
+            }
+
+            endScope();
+
+        } finally {
+            currentClass = enclosingClass;
         }
-        define(stmt.name);
         return null;
     }
 

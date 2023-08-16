@@ -46,4 +46,10 @@ class LoxFunction implements LoxCallable {
     public String toString() {
         return "<fn " + name + ">";
     }
+
+    LoxFunction bind(LoxInstance instance) {
+        Environment environment = new Environment(closure);
+        environment.define("this", instance);
+        return new LoxFunction(name, params, body, environment);
+    }
 }
