@@ -7,19 +7,30 @@ class LoxFunction implements LoxCallable {
     private final List<Token> params;
     private final List<Stmt> body;
     private final Environment closure;
+    private final boolean isInitializer;
 
-    LoxFunction(String name, List<Token> params, List<Stmt> body, Environment closure) {
+
+    private LoxFunction(String name, List<Token> params, List<Stmt> body, Environment closure, boolean isInitializer) {
+        this.isInitializer = isInitializer;
         this.closure = closure;
         this.name = name;
         this.params = params;
         this.body = body;
     }
-    LoxFunction(List<Token> params, List<Stmt> body, Environment closure) {
-        this("lambda", params, body, closure);
+
+    // For lambdas
+    LoxFunction(Expr.Lambda expr, Environment closure) {
+        this("lambda", expr.params, expr.body, closure, false);
     }
 
+    // For methods (some of which are initializers)
+    LoxFunction(Stmt.Function stmt, Environment environment, boolean isInitializer) {
+        this(stmt.name.lexeme, stmt.params, stmt.body, environment, isInitializer);
+    }
+
+    // For "regular" functions
     LoxFunction(Stmt.Function stmt, Environment environment) {
-        this(stmt.name.lexeme, stmt.params, stmt.body, environment);
+        this(stmt, environment, false);
     }
 
     @Override
@@ -32,8 +43,12 @@ class LoxFunction implements LoxCallable {
         try {
             interpreter.executeBlock(body, environment);
         } catch (Return returnValue) {
+            if (isInitializer) return closure.getAt(0, "this");
+
             return returnValue.value;
         }
+
+        if (isInitializer) return closure.getAt(0, "this");
         return null;
     }
 
@@ -50,6 +65,6 @@ class LoxFunction implements LoxCallable {
     LoxFunction bind(LoxInstance instance) {
         Environment environment = new Environment(closure);
         environment.define("this", instance);
-        return new LoxFunction(name, params, body, environment);
+        return new LoxFunction(name, params, body, environment, isInitializer);
     }
 }
