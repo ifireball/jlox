@@ -14,6 +14,7 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     private enum FunctionType {
         NONE,
+        CLASSMETHOD,
         FUNCTION,
         INITIALIZER,
         LAMBDA,
@@ -177,6 +178,14 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
                     declaration = FunctionType.INITIALIZER;
                 }
                 resolveFunction(method, declaration);
+            }
+            for (Stmt.Function method : stmt.classMethods) {
+                if (method.name.lexeme.equals("init")) {
+                    // Side-step `init` special behaviour - though might become handy if
+                    // we make a way to access class fields
+                    Lox.error(method.name, "Cannot have an 'init' class method");
+                }
+                resolveFunction(method, FunctionType.CLASSMETHOD);
             }
 
             endScope();

@@ -1,0 +1,21 @@
+class Code {
+    init(type) {
+        this.type = type;
+    }
+    show() {
+        print "[CODE " + this.type + "!]";
+    }
+    class red() {
+        return this("RED");
+    }
+    class green() {
+        return this("GREEN");
+    }
+    class blue() {
+        return this("BLUE");
+    }
+}
+
+Code.red().show();   // Prints "[CODE RED!]"
+Code.green().show(); // Prints "[CODE GREEN!]"
+Code.blue().show();  // Prints "[CODE BLUE!]"

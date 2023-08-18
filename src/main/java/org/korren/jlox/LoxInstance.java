@@ -4,10 +4,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 class LoxInstance {
-    private LoxClass klass;
+    private final LoxClass klass;
     private final Map<String, Object> fields = new HashMap<>();
 
     LoxInstance(LoxClass klass) {
+        if (klass == null && this instanceof LoxClass) {
+            // Special case for the MetaClassClass
+            this.klass = (LoxClass) this;
+            return;
+        }
         this.klass = klass;
     }
 

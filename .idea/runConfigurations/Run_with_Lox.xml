@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Lox instance_print.lox" type="Application" factoryName="Application">
+  <configuration default="false" name="Run with Lox" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="org.korren.jlox.Lox" />
     <module name="jlox" />
-    <option name="PROGRAM_PARAMETERS" value="samples/instance_print.lox" />
+    <option name="PROGRAM_PARAMETERS" value="$FilePath$" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="org.korren.jlox.*" />

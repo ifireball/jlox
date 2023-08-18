@@ -1,15 +1,34 @@
 package org.korren.jlox;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class LoxClass implements LoxCallable {
+class LoxClass extends LoxInstance implements LoxCallable {
     final String name;
     private final Map<String, LoxFunction> methods;
 
-    LoxClass(String name, Map<String, LoxFunction> methods) {
+    static private final LoxClass metaClassClass = new LoxClass();
+
+    private LoxClass(LoxClass klass, String name, Map<String, LoxFunction> methods) {
+        super(klass);
         this.name = name;
         this.methods = methods;
+    }
+
+    // For MetaClassClass
+    private LoxClass() {
+        this(null, "MetaClassClass", new HashMap<>());
+    }
+
+    // For meta classes
+    private LoxClass(String name, Map<String, LoxFunction> methods) {
+        this(metaClassClass, name + "MetaClass", methods);
+    }
+
+    // For normal classes
+    LoxClass(String name, Map<String, LoxFunction> methods, Map<String, LoxFunction> classMethods) {
+        this(new LoxClass(name, classMethods), name, methods);
     }
 
     @Override
