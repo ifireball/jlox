@@ -22,7 +22,8 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
     private enum ClassType {
         NONE,
-        CLASS
+        CLASS,
+        SUBCLASS
     }
 
     private static class VarInfo {
@@ -34,6 +35,12 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         VarInfo(Token nameTok, String varType) {
             this.nameTok = nameTok;
             this.varType = varType;
+        }
+
+        VarInfo(Token nameTok, String varType, boolean defined, boolean wasUsed) {
+            this(nameTok, varType);
+            this.defined = defined;
+            this.wasUsed = wasUsed;
         }
     }
 
@@ -105,6 +112,18 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitSuperExpr(Expr.Super expr) {
+        if (currentClass == ClassType.NONE) {
+            Lox.error(expr.keyword, "Can't use 'super' outside of a class.");
+        } else if (currentClass != ClassType.SUBCLASS) {
+            Lox.error(expr.keyword, "Can't use 'super' in a class with no superclass.");
+        }
+
+        resolveLocal(expr, expr.keyword);
+        return null;
+    }
+
+    @Override
     public Void visitTernaryExpr(Expr.Ternary expr) {
         resolve(expr.condition);
         resolve(expr.trueBranch);
@@ -170,14 +189,15 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
                 if (stmt.name.lexeme.equals(stmt.superclass.name.lexeme)) {
                     Lox.error(stmt.superclass.name, "A class can't inherit from itself.");
                 }
+                currentClass = ClassType.SUBCLASS;
                 resolve(stmt.superclass);
+
+                beginScope();
+                scopes.peek().put("super", new VarInfo(stmt.name, "super", true, true));
             }
 
             beginScope();
-            var vi = new VarInfo(stmt.name, "this");
-            vi.defined = true;
-            vi.wasUsed = true;
-            scopes.peek().put("this", vi);
+            scopes.peek().put("this", new VarInfo(stmt.name, "this", true, true));
 
             for (Stmt.Function method : stmt.methods) {
                 FunctionType declaration = FunctionType.METHOD;
@@ -196,6 +216,8 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
             }
 
             endScope();
+
+            if (stmt.superclass != null) endScope();
 
         } finally {
             currentClass = enclosingClass;
