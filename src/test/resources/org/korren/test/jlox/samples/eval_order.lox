@@ -1,0 +1,15 @@
+// Demo expression evaluation order
+// Prints "1"
+// Prints "2"
+// Prints "3"
+// Prints "4"
+// Prints "5"
+// Prints "9"
+// Prints "12"
+
+fun echo(n) {
+  print n;
+  return n;
+}
+
+print echo(echo(1) + echo(2)) + echo(echo(4) + echo(5));
