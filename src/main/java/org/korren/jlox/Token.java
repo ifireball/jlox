@@ -3,9 +3,9 @@ package org.korren.jlox;
 import java.util.Objects;
 
 public class Token  {
-    final TokenType type;
+    public final TokenType type;
     final String lexeme;
-    final Object literal;
+    public final Object literal;
     final int line;
 
     public Token(TokenType type, String lexeme, Object literal, int line) {
