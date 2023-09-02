@@ -3,12 +3,13 @@ package org.korren.jlox;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 
-class Lox {
+public class Lox {
     private static final Interpreter interpreter = new Interpreter();
     static boolean hadError = false;
     static boolean hadRuntimeError = false;
@@ -90,7 +91,7 @@ class Lox {
     }
 
 
-    private static void run(String source) {
+    public static void run(String source, PrintStream stdOut) {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
         Parser parser = new Parser(tokens);
@@ -105,10 +106,14 @@ class Lox {
         // Stop if there was a resolution error.
         if (hadError) return;
 
-        interpreter.interpret(statements);
+        interpreter.interpret(statements, stdOut);
     }
 
-    static void error(int line, String message) {
+    private static void run(String source) {
+        run(source, System.out);
+    }
+
+        static void error(int line, String message) {
         report(line, "", message);
     }
 

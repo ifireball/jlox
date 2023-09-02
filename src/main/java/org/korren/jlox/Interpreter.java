@@ -1,5 +1,6 @@
 package org.korren.jlox;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,8 +10,10 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     final Environment globals = new Environment();
     private Environment environment = globals;
     private final Map<Expr, Integer> locals = new HashMap<>();
+    private PrintStream stdOut;
 
     Interpreter() {
+        this.stdOut = System.out;
         globals.define("clock", new LoxCallable() {
             @Override
             public Object call(Interpreter interpreter, List<Object> arguments) {
@@ -25,14 +28,22 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         });
     }
 
-    void interpret(List<Stmt> statements) {
+    void interpret(List<Stmt> statements, PrintStream stdOut) {
+        PrintStream currentOut = this.stdOut;
+        this.stdOut = stdOut;
         try {
             for (Stmt statement : statements) {
                 execute(statement);
             }
         } catch (RuntimeError error) {
             Lox.runtimeError(error);
+        } finally {
+            this.stdOut = currentOut;
         }
+    }
+
+    void interpret(List<Stmt> statements) {
+        interpret(statements, System.out);
     }
 
     private void execute(Stmt statement) {
@@ -328,7 +339,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Void visitPrintStmt(Stmt.Print stmt) {
         Object value = evaluate(stmt.expression);
-        System.out.println(stringify(value));
+        stdOut.println(stringify(value));
         return null;
     }
 

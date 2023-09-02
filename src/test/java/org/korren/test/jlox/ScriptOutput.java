@@ -1,5 +1,10 @@
 package org.korren.test.jlox;
 
+import org.korren.jlox.Lox;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -18,5 +23,15 @@ public class ScriptOutput {
                 .filter((Matcher::matches))
                 .map((m) -> m.group(1) + "\n")
                 .collect(Collectors.joining());
+    }
+
+    static String capture(String script) throws IOException {
+        try (
+            var ba = new ByteArrayOutputStream();
+            var ps = new PrintStream(ba)
+        ) {
+            Lox.run(script, ps);
+            return ba.toString();
+        }
     }
 }
