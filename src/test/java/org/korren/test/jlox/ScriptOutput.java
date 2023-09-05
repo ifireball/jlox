@@ -11,11 +11,11 @@ import java.util.stream.Collectors;
 
 import static org.korren.jlox.TokenType.LINE_COMMENT;
 
-public class ScriptOutput {
-    static final Pattern expectCmt = Pattern.compile("^ ?(?:Expect|Prints) \"([^\"]*)\"$");
-    static final Pattern expectErrCmt = Pattern.compile("^ ?Error \"([^\"]*)\"$");
+public record ScriptOutput(String stdOut, String stdErr) {
+    private static final Pattern expectCmt = Pattern.compile("^ ?(?:Expect|Prints) \"([^\"]*)\"$");
+    private static final Pattern expectErrCmt = Pattern.compile("^ ?Error \"([^\"]*)\"$");
 
-    static String readExpected(String script) {
+    static String readExpectedOut(String script) {
         var cs = new CommentScanner(script);
         return cs.scanTokens().stream()
                 .filter((t) -> t.type == LINE_COMMENT)
@@ -37,13 +37,19 @@ public class ScriptOutput {
                 .collect(Collectors.joining());
     }
 
-    static String capture(String script) throws IOException {
+    static ScriptOutput readExpected(String script) {
+        return new ScriptOutput(ScriptOutput.readExpectedOut(script), ScriptOutput.readExpectedErrors(script));
+    }
+
+    static ScriptOutput capture(String script) throws IOException {
         try (
-            var ba = new ByteArrayOutputStream();
-            var ps = new PrintStream(ba)
+            var outBa = new ByteArrayOutputStream();
+            var out = new PrintStream(outBa);
+            var errBa = new ByteArrayOutputStream();
+            var err = new PrintStream(errBa)
         ) {
-            Lox.run(script, ps);
-            return ba.toString();
+            Lox.run(script, out, err);
+            return new ScriptOutput(outBa.toString(), errBa.toString());
         }
     }
 }

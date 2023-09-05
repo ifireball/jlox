@@ -20,28 +20,36 @@ class ScriptOutputTest {
             17/0;        // Error "Division by zero"
                          // Error "[line 10]"
             """;
-    static final String expected = """
+    static final ScriptOutput expected = new ScriptOutput(
+            """
             40
             bye
-            """;
-
-    static final String expectedErrors = """
+            """,
+            """
             Division by zero
             [line 10]
-            """;
+            """
+    );
 
     @Test
-    void readExpected() {
-        var out = ScriptOutput.readExpected(code);
+    void readExpectedOut() {
+        var out = ScriptOutput.readExpectedOut(code);
 
-        assertEquals(expected, out);
+        assertEquals(expected.stdOut(), out);
     }
 
     @Test
     void readExpectedErrors() {
         var out = ScriptOutput.readExpectedErrors(code);
 
-        assertEquals(expectedErrors, out);
+        assertEquals(expected.stdErr(), out);
+    }
+
+    @Test
+    void readExpected() {
+        var out = ScriptOutput.readExpected(code);
+
+        assertEquals(expected, out);
     }
 
     @Test
