@@ -12,8 +12,8 @@ import java.util.stream.Collectors;
 import static org.korren.jlox.TokenType.LINE_COMMENT;
 
 public record ScriptOutput(String stdOut, String stdErr) {
-    private static final Pattern expectCmt = Pattern.compile("^ ?(?:Expect|Prints) \"([^\"]*)\"$");
-    private static final Pattern expectErrCmt = Pattern.compile("^ ?Error \"([^\"]*)\"$");
+    private static final Pattern expectCmt = Pattern.compile("^ ?(?:Expect|Prints):? \"([^\"]*)\"\\.?$");
+    private static final Pattern expectErrCmt = Pattern.compile("^ ?Error:? \"([^\"]*)\"\\.?$");
 
     static String readExpectedOut(String script) {
         var cs = new CommentScanner(script);
@@ -50,6 +50,8 @@ public record ScriptOutput(String stdOut, String stdErr) {
         ) {
             Lox.run(script, out, err);
             return new ScriptOutput(outBa.toString(), errBa.toString());
+        } finally {
+            Lox.reset();
         }
     }
 }

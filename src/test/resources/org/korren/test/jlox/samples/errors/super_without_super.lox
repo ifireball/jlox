@@ -1,6 +1,6 @@
 class Eclair {
   cook() {
-    super.cook();  // Error: "Can't use 'super' in a class with no superclass.
+    super.cook();  // Error: "[line 3] Error at 'super': Can't use 'super' in a class with no superclass."
     print "Pipe full of crème pâtissière.";
   }
 }

@@ -44,7 +44,14 @@ public class JLoxTests {
                 throw new RuntimeException(e);
             }
         } else {
-            return dynamicTest(pth.getFileName().toString(), pth.toUri(), () -> {});
+            return dynamicTest(pth.getFileName().toString(), pth.toUri(), () -> {
+                var code = Files.readString(pth);
+
+                var exp = ScriptOutput.readExpected(code);
+                var out = ScriptOutput.capture(code);
+
+                assertEquals(exp, out);
+            });
         }
     }
 }

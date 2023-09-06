@@ -1,3 +1,14 @@
+// Prints "3"
+// Prints "9"
+// Prints "9"
+// Prints "27"
+// Prints "81"
+// Prints "81"
+// Prints "243"
+// Prints "729"
+// Prints "729"
+// Prints "2187"
+
 var n = 1;
 var i = 0;
 for(;;) {

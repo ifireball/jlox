@@ -6,4 +6,4 @@ class Doughnut {
 
 class BostonCream < Doughnut {}
 
-BostonCream().cook(); // Prints "Fry until golden brown"
+BostonCream().cook(); // Prints "Fry until golden brown."

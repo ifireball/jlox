@@ -1,1 +1,1 @@
-class Oops < Oops {} // Error: "A class can't inherit from itself."
+class Oops < Oops {} // Error: "[line 1] Error at 'Oops': A class can't inherit from itself."

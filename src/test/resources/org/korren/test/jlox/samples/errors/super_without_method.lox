@@ -1,1 +1,1 @@
-print super; // Syntax error.
+print super; // Error: "[line 1] Error at ';': Expect '.' after 'super'."
