@@ -2,7 +2,6 @@ package org.korren.test.jlox;
 
 import static org.junit.jupiter.api.DynamicContainer.dynamicContainer;
 import org.junit.jupiter.api.DynamicNode;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import java.io.IOException;
@@ -20,7 +19,7 @@ import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
 public class JLoxTests {
     @TestFactory
-    DynamicNode fetchSampleFiles() throws URISyntaxException, IOException {
+    DynamicNode fetchSampleFiles() throws URISyntaxException {
         var uri = Objects.requireNonNull(getClass().getResource("samples")).toURI();
         FileSystem fs;
         try {
