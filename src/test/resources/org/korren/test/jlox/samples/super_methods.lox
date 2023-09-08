@@ -11,4 +11,5 @@ class BostonCream < Doughnut {
   }
 }
 
-BostonCream().cook();
+BostonCream().cook(); // Prints "Fry until golden brown."
+                      // Prints "Pipe full of custard and coat with chocolate."

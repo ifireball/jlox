@@ -6,3 +6,25 @@ for (var b = 1; a < 10000; b = temp + b) {
   temp = a;
   a = b;
 }
+
+// Prints "0"
+// Prints "1"
+// Prints "1"
+// Prints "2"
+// Prints "3"
+// Prints "5"
+// Prints "8"
+// Prints "13"
+// Prints "21"
+// Prints "34"
+// Prints "55"
+// Prints "89"
+// Prints "144"
+// Prints "233"
+// Prints "377"
+// Prints "610"
+// Prints "987"
+// Prints "1597"
+// Prints "2584"
+// Prints "4181"
+// Prints "6765"

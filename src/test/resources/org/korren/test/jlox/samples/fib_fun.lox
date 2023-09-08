@@ -6,3 +6,24 @@ fun fib(n) {
 for (var i = 0; i < 20; i = i + 1) {
   print fib(i);
 }
+
+// Prints "0"
+// Prints "1"
+// Prints "1"
+// Prints "2"
+// Prints "3"
+// Prints "5"
+// Prints "8"
+// Prints "13"
+// Prints "21"
+// Prints "34"
+// Prints "55"
+// Prints "89"
+// Prints "144"
+// Prints "233"
+// Prints "377"
+// Prints "610"
+// Prints "987"
+// Prints "1597"
+// Prints "2584"
+// Prints "4181"
