@@ -1,7 +1,7 @@
-// The following should print:
-// global
-// global
-// block
+// The following should:
+// Prints "global"
+// Prints "global"
+// Prints "block"
 //
 // But it may print the following if variable resolution is too dynamic:
 // global

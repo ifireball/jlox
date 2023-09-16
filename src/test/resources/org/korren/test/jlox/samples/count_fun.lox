@@ -3,4 +3,6 @@ fun count(n) {
   print n;
 }
 
-count(3);
+count(3); // Prints "1"
+          // Prints "2"
+          // Prints "3"
